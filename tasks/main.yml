@@ -1,6 +1,6 @@
 ---
 - set_fact:
-    net_backup_root: "./backup"
+    net_backup_root: "{{ playbook_dir }}/backup"
   when: net_backup_root is not defined
  
 - set_fact:
@@ -16,6 +16,12 @@
   register: stat_result
 
 - block:
+  - name: Create the backup directory {{ net_backup_root }}
+    file:
+      path: "{{ net_backup_root }}"
+      state: directory
+    changed_when: False
+
   - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-backup-config.yml"
 
   - name: Copy the temp to the destination
@@ -23,7 +29,6 @@
       src: "{{ temp_backup_file }}"
       dest: "{{ net_backup_file }}"
       force: "{{ net_backup_force | default('no') }}"
-    changed_when: False
 
   - name: Delete the temp file 
     file:
@@ -31,7 +36,7 @@
       state: absent
     changed_when: False
 
-  when: (stat_result.stat.exists == 'False') or (net_backup_force == 'true')
+  when: (stat_result.stat.exists|bool == false) or (net_backup_force|bool == true)
 
-- include: "{{ role_path }}/tasks/{{ ansible_network_os }}-diff-config.yml"
+- include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-diff-config.yml"
   when: stat_result.stat.exists == True
