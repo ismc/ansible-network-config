@@ -1,38 +1,44 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+This role backs up the configuration of a network device if a backup does not exist and detects differences in the device's configuration with the previsous backup if it does exist.
+
+The file is backed up to "{{ net_backup_root }}/{{ inventory_hostname }}"
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Currently supports:
+- ios
+- nxos
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
-
+    net_backup_root
+    net_backup_force
+    
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None
 
 Example Playbook
 ----------------
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+    - hosts: network
+      connection: local
+      gather_facts: no
+
+      tasks:
+        - include_role:
+            name: net-backup
+          vars:
+            net_backup_root: /data/backups
 
 License
 -------
 
-BSD
-
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+GPL-3.0
