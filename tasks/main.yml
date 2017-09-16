@@ -2,7 +2,7 @@
 - set_fact:
     net_backup_root: "{{ playbook_dir }}/backup"
   when: net_backup_root is not defined
- 
+
 - set_fact:
     net_backup_file: "{{ net_backup_root }}/{{ inventory_hostname }}"
 
@@ -12,7 +12,7 @@
 
 - name: Check to see if the backup file exists
   stat:
-    path: "{{ net_backup_file }}" 
+    path: "{{ net_backup_file }}"
   register: stat_result
 
 - block:
@@ -30,7 +30,7 @@
       dest: "{{ net_backup_file }}"
       force: "{{ net_backup_force | default('no') }}"
 
-  - name: Delete the temp file 
+  - name: Delete the temp file
     file:
       path: "{{ temp_backup_file }}"
       state: absent
