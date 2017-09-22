@@ -38,5 +38,9 @@
 
   when: (stat_result.stat.exists|bool == false) or (net_backup_force|bool == true)
 
-- include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-diff-config.yml"
+- block:
+  - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-diff-config.yml"
+
+  - debug: msg="Configuration has changed."
+    failed_when: diff_results.changed == true
   when: stat_result.stat.exists == True

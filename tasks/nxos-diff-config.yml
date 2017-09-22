@@ -4,3 +4,4 @@
     diff_against: intended
     intended_config: "{{ lookup('file', net_backup_file) }}"
   diff: true
+  register: diff_results
