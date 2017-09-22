@@ -43,4 +43,5 @@
 
   - debug: msg="Configuration has changed."
     failed_when: diff_results.changed == true
+    when: diff_results.changed == true
   when: stat_result.stat.exists == True
