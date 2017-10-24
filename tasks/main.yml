@@ -4,7 +4,7 @@
   when: net_backup_root is not defined
 
 - set_fact:
-    net_backup_file: "{{ net_backup_root }}/{{ inventory_hostname }}"
+    net_backup_file: "{{ net_backup_root }}/{{ inventory_hostname }}.cfg"
 
 - set_fact:
     net_backup_force: false
