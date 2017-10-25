@@ -16,9 +16,9 @@
   register: stat_result
 
 - block:
-  - name: Create the backup directory {{ net_backup_root }}
+  - name: Create the backup directory {{ net_backup_dir }}
     file:
-      path: "{{ net_backup_root }}"
+      path: "{{ net_backup_dir }}"
       state: directory
     changed_when: False
 
