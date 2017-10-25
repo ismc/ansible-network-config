@@ -1,10 +1,10 @@
 ---
 - set_fact:
-    net_backup_root: "{{ inventory_dir }}/backups"
-  when: net_backup_root is not defined
+    net_backup_dir: "{{ playbook_dir }}/backups"
+  when: net_backup_dir is not defined
 
 - set_fact:
-    net_backup_file: "{{ net_backup_root }}/{{ inventory_hostname }}.cfg"
+    net_backup_file: "{{ net_backup_dir }}/{{ inventory_hostname }}.cfg"
 
 - set_fact:
     net_backup_force: false
