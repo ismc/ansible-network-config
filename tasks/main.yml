@@ -4,44 +4,117 @@
   when: net_backup_dir is not defined
 
 - set_fact:
+    net_backup_filename: "{{ inventory_hostname }}.cfg"
     net_backup_file: "{{ net_backup_dir }}/{{ inventory_hostname }}.cfg"
 
 - set_fact:
     net_backup_force: false
   when: net_backup_force is not defined
 
-- name: Check to see if the backup file exists
-  stat:
-    path: "{{ net_backup_file }}"
-  register: stat_result
+- name: Clone the backup repo
+  git:
+    repo: "{{ network_backup_repository }}"
+    dest: "{{ net_backup_dir }}"
+    accept_hostkey: yes
+    force: yes
+  when: network_backup_repository is defined
+  register: clone_result
+  delegate_to: localhost
+  run_once: true
+
+- debug: var=clone_result
+
+- debug: msg="{{ clone_result.msg }} Overwriting."
+  when: clone_result.changed
+
+- include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-backup-config.yml"
+
+- name: Copy the temp to the destination
+  copy:
+    src: "{{ temp_backup_file }}"
+    dest: "{{ net_backup_file }}"
+  register: copy_result
+  delegate_to: localhost
+
+- name: Delete the temp file
+  file:
+    path: "{{ temp_backup_file }}"
+    state: absent
+  changed_when: False
+  delegate_to: localhost
 
 - block:
-  - name: Create the backup directory {{ net_backup_dir }}
-    file:
-      path: "{{ net_backup_dir }}"
-      state: directory
+  - name: Check git status of the config file
+    shell: "git status -- {{ net_backup_filename }}"
+    args:
+      chdir: "{{ net_backup_dir }}"
+    register: status_results
     changed_when: False
+    ignore_errors: yes
+    delegate_to: localhost
 
-  - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-backup-config.yml"
+  - debug: var=status_results
 
-  - name: Copy the temp to the destination
-    copy:
-      src: "{{ temp_backup_file }}"
-      dest: "{{ net_backup_file }}"
-      force: "{{ net_backup_force | default('no') }}"
+  - set_fact:
+      git_regex: "^\\s+(([^:]+):\\s+)?({{ net_backup_filename }})"
 
-  - name: Delete the temp file
-    file:
-      path: "{{ temp_backup_file }}"
-      state: absent
-    changed_when: False
+  - set_fact:
+      status_output: "{{ status_results.stdout_lines | select('search', net_backup_filename) | join | regex_replace('^\\s+', '') }}"
 
-  when: (stat_result.stat.exists|bool == false) or (net_backup_force|bool == true)
+  - set_fact:
+      file_status: "{{ status_output.split(':')[0] }}"
 
-- block:
-  - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-diff-config.yml"
+  # The results of these macinations will either be a status, the filename itself,
+  # or an empty string.  The status is the status, the filename indicates that the
+  # file is not being tracked, and an empty string indicates that the file did not
+  # change.
 
-  - debug: msg="Configuration has changed."
-    failed_when: diff_results.changed == true
-    when: diff_results.changed == true
-  when: stat_result.stat.exists == True
+  - debug: var=file_status
+
+  - name: Add new backup to the repossitory
+    shell: "git add {{ net_backup_filename }}"
+    args:
+      chdir: "{{ net_backup_dir }}"
+    delegate_to: localhost
+    when: file_status == net_backup_filename
+
+  # - block:
+  #     - name: Get a diff of the file
+  #       shell: "git diff {{ net_backup_filename }}"
+  #       args:
+  #         chdir: "{{ net_backup_dir }}"
+  #       register: diff_results
+  #       delegate_to: localhost
+  #
+  #     - debug: msg="{{ diff_results.stdout }}"
+  #   when: file_status == 'modified'
+  when: copy_result.changed
+
+- name: Get the status of the repository
+  shell: "git status"
+  args:
+    chdir: "{{ net_backup_dir }}"
+  register: status_results
+  changed_when: False
+  ignore_errors: yes
+  delegate_to: localhost
+  run_once: true
+
+- debug: var=status_results
+  run_once: true
+
+- name: Commit the changes
+  shell: "git commit -am 'Changed'"
+  args:
+    chdir: "{{ net_backup_dir }}"
+  when: status_results.stdout is search('Changes')
+  delegate_to: localhost
+  run_once: true
+
+- name: Push the changes
+  shell: "git push origin master"
+  args:
+    chdir: "{{ net_backup_dir }}"
+  run_once: true
+  when: status_results.stdout is search('Changes')
+  delegate_to: localhost
