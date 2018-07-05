@@ -22,10 +22,11 @@
   delegate_to: localhost
   run_once: true
 
-- debug: var=clone_result
+# - debug: var=clone_result
 
 - debug: msg="{{ clone_result.msg }} Overwriting."
   when: clone_result.changed
+  run_once: true
 
 - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-backup-config.yml"
 
@@ -53,7 +54,7 @@
     ignore_errors: yes
     delegate_to: localhost
 
-  - debug: var=status_results
+  # - debug: var=status_results
 
   - set_fact:
       git_regex: "^\\s+(([^:]+):\\s+)?({{ net_backup_filename }})"
@@ -69,14 +70,14 @@
   # file is not being tracked, and an empty string indicates that the file did not
   # change.
 
-  - debug: var=file_status
+  # - debug: var=file_status
 
-  - name: Add new backup to the repossitory
-    shell: "git add {{ net_backup_filename }}"
-    args:
-      chdir: "{{ net_backup_dir }}"
-    delegate_to: localhost
-    when: file_status == net_backup_filename
+  # - name: Add new backup to the repossitory
+  #   shell: "git add {{ net_backup_filename }}"
+  #   args:
+  #     chdir: "{{ net_backup_dir }}"
+  #   delegate_to: localhost
+  #   when: file_status == net_backup_filename
 
   # - block:
   #     - name: Get a diff of the file
@@ -90,6 +91,14 @@
   #   when: file_status == 'modified'
   when: copy_result.changed
 
+- name: Add new backups to the repossitory
+  shell: "git add *.cfg"
+  args:
+    chdir: "{{ net_backup_dir }}"
+  delegate_to: localhost
+  changed_when: False
+  run_once: true
+
 - name: Get the status of the repository
   shell: "git status"
   args:
@@ -100,8 +109,8 @@
   delegate_to: localhost
   run_once: true
 
-- debug: var=status_results
-  run_once: true
+# - debug: var=status_results
+#   run_once: true
 
 - name: Commit the changes
   shell: "git commit -am 'Changed'"
