@@ -103,7 +103,7 @@
 - debug: var=status_results
   run_once: true
 
-- name: Commit the changes
+- name: Commit any changes
   shell: "git commit -am 'Changed'"
   args:
     chdir: "{{ net_backup_dir }}"
