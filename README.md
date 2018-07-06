@@ -1,4 +1,4 @@
-Role Name
+network-config
 =========
 
 This role backs up the configuration of a network device if a backup does not exist and detects differences in the device's configuration with the previous backup if it does exist.
@@ -19,7 +19,7 @@ Role Variables
 
     net_backup_root
     net_backup_force
-    
+
 Dependencies
 ------------
 
@@ -44,11 +44,11 @@ The playbook can be run to either backup or check for changes:
 
     ansible-playbook -i hosts net-backup.yml
 
-The playbook can be run to display the differences found between the saved config and the running config: 
+The playbook can be run to display the differences found between the saved config and the running config:
 
     ansible-playbook --diff -i hosts net-backup.yml
 
-The playbook can be run with "net_backup_force=true to force the backup over an existing config to accept changes: 
+The playbook can be run with "net_backup_force=true to force the backup over an existing config to accept changes:
 
     ansible-playbook --extra-vars "net_backup_force=true" -i hosts net-backup.yml
 
