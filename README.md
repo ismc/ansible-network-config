@@ -1,11 +1,10 @@
 network-config
 =========
 
-This role backs up the configuration of a network device if a backup does not exist and detects differences in the device's configuration with the previous backup if it does exist.
+This role backs up the configuration of a network device into a git repository.
 
-The file is backed up to "{{ net_backup_root }}/{{ inventory_hostname }}"
+The file is backed up to `{{ net_backup_dir }}/{{ inventory_hostname }}.cfg`
 
-The backup can be forced by setting net_backup_force "true"
 
 Requirements
 ------------
@@ -17,8 +16,8 @@ Currently supports:
 Role Variables
 --------------
 
-    net_backup_root
-    net_backup_force
+- `network_backup_dir`: The dictory where the backups will be placed.
+- `network_backup_repository`: The git repository that will be use to store the backups
 
 Dependencies
 ------------
@@ -28,17 +27,16 @@ None
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: network
-      connection: local
-      gather_facts: no
-
-      tasks:
-        - include_role:
-            name: net-backup
-          vars:
-            net_backup_root: /data/backups
+---
+- hosts: network
+  gather_facts: no
+  tasks:
+    - include_role:
+        name: network-backup
+      vars:
+        network_backup_repository: 'git@github.com:ismc/configs.git'
+        net_backup_dir: "{{ lookup('env', 'PWD') }}/backups"
 
 The playbook can be run to either backup or check for changes:
 
@@ -48,9 +46,6 @@ The playbook can be run to display the differences found between the saved confi
 
     ansible-playbook --diff -i hosts net-backup.yml
 
-The playbook can be run with "net_backup_force=true to force the backup over an existing config to accept changes:
-
-    ansible-playbook --extra-vars "net_backup_force=true" -i hosts net-backup.yml
 
 
 License

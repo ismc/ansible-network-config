@@ -1,11 +1,11 @@
 ---
 - set_fact:
-    net_backup_dir: "{{ playbook_dir }}/backups"
-  when: net_backup_dir is not defined
+    network_backup_dir: "{{ playbook_dir }}/backups"
+  when: network_backup_dir is not defined
 
 - set_fact:
     net_backup_filename: "{{ inventory_hostname }}.cfg"
-    net_backup_file: "{{ net_backup_dir }}/{{ inventory_hostname }}.cfg"
+    net_backup_file: "{{ network_backup_dir }}/{{ inventory_hostname }}.cfg"
 
 - set_fact:
     net_backup_force: false
@@ -14,7 +14,7 @@
 - name: Clone the backup repo
   git:
     repo: "{{ network_backup_repository }}"
-    dest: "{{ net_backup_dir }}"
+    dest: "{{ network_backup_dir }}"
     accept_hostkey: yes
     force: yes
   when: network_backup_repository is defined
@@ -46,7 +46,7 @@
 #   - name: Check git status of the config file
 #     shell: "git status -- {{ net_backup_filename }}"
 #     args:
-#       chdir: "{{ net_backup_dir }}"
+#       chdir: "{{ network_backup_dir }}"
 #     register: status_results
 #     changed_when: False
 #     ignore_errors: yes
@@ -73,7 +73,7 @@
 #   - name: Add new backup to the repossitory
 #     shell: "git add {{ net_backup_filename }}"
 #     args:
-#       chdir: "{{ net_backup_dir }}"
+#       chdir: "{{ network_backup_dir }}"
 #     delegate_to: localhost
 #     when: file_status == net_backup_filename
 #
@@ -81,7 +81,7 @@
 #       - name: Get a diff of the file
 #         shell: "git diff {{ net_backup_filename }}"
 #         args:
-#           chdir: "{{ net_backup_dir }}"
+#           chdir: "{{ network_backup_dir }}"
 #         register: diff_results
 #         delegate_to: localhost
 #
@@ -92,7 +92,7 @@
 - name: Add any new backups to the repossitory
   shell: "git add *.cfg"
   args:
-    chdir: "{{ net_backup_dir }}"
+    chdir: "{{ network_backup_dir }}"
   delegate_to: localhost
   changed_when: False
   run_once: true
@@ -100,7 +100,7 @@
 - name: Get the status of the repository
   shell: "git status"
   args:
-    chdir: "{{ net_backup_dir }}"
+    chdir: "{{ network_backup_dir }}"
   register: status_results
   changed_when: False
   ignore_errors: yes
@@ -110,7 +110,7 @@
 - name: Commit the changes
   shell: "git commit -am 'Changed'"
   args:
-    chdir: "{{ net_backup_dir }}"
+    chdir: "{{ network_backup_dir }}"
   when: status_results.stdout is search('Changes')
   delegate_to: localhost
   run_once: true
@@ -118,7 +118,7 @@
 - name: Push the changes
   shell: "git push origin master"
   args:
-    chdir: "{{ net_backup_dir }}"
+    chdir: "{{ network_backup_dir }}"
   run_once: true
   when: status_results.stdout is search('Changes')
   delegate_to: localhost
