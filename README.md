@@ -27,16 +27,14 @@ None
 Example Playbook
 ----------------
 
-
----
-- hosts: network
-  gather_facts: no
-  tasks:
-    - include_role:
-        name: network-backup
-      vars:
-        network_backup_repository: 'git@github.com:ismc/configs.git'
-        net_backup_dir: "{{ lookup('env', 'PWD') }}/backups"
+    - hosts: network
+      gather_facts: no
+      tasks:
+        - include_role:
+            name: network-backup
+          vars:
+            network_backup_repository: 'git@github.com:ismc/configs.git'
+            net_backup_dir: "{{ lookup('env', 'PWD') }}/backups"
 
 The playbook can be run to either backup or check for changes:
 
