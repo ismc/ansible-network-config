@@ -7,24 +7,21 @@
     net_backup_filename: "{{ inventory_hostname }}.cfg"
     net_backup_file: "{{ network_backup_dir }}/{{ inventory_hostname }}.cfg"
 
-- set_fact:
-    net_backup_force: false
-  when: net_backup_force is not defined
+- block:
+  - name: Clone the backup repo
+    git:
+      repo: "{{ network_backup_repository }}"
+      dest: "{{ network_backup_dir }}"
+      accept_hostkey: yes
+      force: yes
+    register: clone_result
+    delegate_to: localhost
+    run_once: true
 
-- name: Clone the backup repo
-  git:
-    repo: "{{ network_backup_repository }}"
-    dest: "{{ network_backup_dir }}"
-    accept_hostkey: yes
-    force: yes
+  - debug: msg="{{ clone_result.msg }} Overwriting."
+    when: clone_result is defined and clone_result.changed
+    run_once: true
   when: network_backup_repository is defined
-  register: clone_result
-  delegate_to: localhost
-  run_once: true
-
-- debug: msg="{{ clone_result.msg }} Overwriting."
-  when: clone_result is defined and clone_result.changed
-  run_once: true
 
 - include_tasks: "{{ role_path }}/tasks/{{ ansible_network_os }}-backup-config.yml"
 
@@ -89,36 +86,38 @@
 #     when: file_status == 'modified'
 #   when: copy_result.changed
 
-- name: Add any new backups to the repossitory
-  shell: "git add *.cfg"
-  args:
-    chdir: "{{ network_backup_dir }}"
-  delegate_to: localhost
-  changed_when: False
-  run_once: true
+- block:
+  - name: Add any new backups to the repossitory
+    shell: "git add *.cfg"
+    args:
+      chdir: "{{ network_backup_dir }}"
+    delegate_to: localhost
+    changed_when: False
+    run_once: true
 
-- name: Get the status of the repository
-  shell: "git status"
-  args:
-    chdir: "{{ network_backup_dir }}"
-  register: status_results
-  changed_when: False
-  ignore_errors: yes
-  delegate_to: localhost
-  run_once: true
+  - name: Get the status of the repository
+    shell: "git status"
+    args:
+      chdir: "{{ network_backup_dir }}"
+    register: status_results
+    changed_when: False
+    ignore_errors: yes
+    delegate_to: localhost
+    run_once: true
 
-- name: Commit the changes
-  shell: "git commit -am 'Changed'"
-  args:
-    chdir: "{{ network_backup_dir }}"
-  when: status_results.stdout is search('Changes')
-  delegate_to: localhost
-  run_once: true
+  - name: Commit the changes
+    shell: "git commit -am 'Changed'"
+    args:
+      chdir: "{{ network_backup_dir }}"
+    when: status_results.stdout is search('Changes')
+    delegate_to: localhost
+    run_once: true
 
-- name: Push the changes
-  shell: "git push origin master"
-  args:
-    chdir: "{{ network_backup_dir }}"
-  run_once: true
-  when: status_results.stdout is search('Changes')
-  delegate_to: localhost
+  - name: Push the changes
+    shell: "git push origin master"
+    args:
+      chdir: "{{ network_backup_dir }}"
+    run_once: true
+    when: status_results.stdout is search('Changes')
+    delegate_to: localhost
+  when: network_backup_repository is defined
