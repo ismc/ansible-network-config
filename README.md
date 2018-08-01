@@ -31,7 +31,7 @@ Example Playbook
       gather_facts: no
       tasks:
         - include_role:
-            name: network-backup
+            name: network-config
           vars:
             network_backup_repository: 'git@github.com:ismc/configs.git'
             net_backup_dir: "{{ lookup('env', 'PWD') }}/backups"
